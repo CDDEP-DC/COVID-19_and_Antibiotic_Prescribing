@@ -1,5 +1,5 @@
 # COVID-19 and Antibiotic Prescribing
-# Process data for panel regression
+# Process data for county-level panel regression
 # Created by Alisa Hamilton
 
 import pandas as pd
