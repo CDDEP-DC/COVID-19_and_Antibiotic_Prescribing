@@ -3,16 +3,7 @@
 # Created by Alisa Hamilton
 
 import pandas as pd
-import os
-from collections import OrderedDict
-from collections import Counter
-import io
-from datetime import date
-import datetime
 import glob
-import numpy as np
-from fuzzywuzzy import fuzz
-from fuzzywuzzy import process
 
 OneDrive = "[Main file path]"
 
