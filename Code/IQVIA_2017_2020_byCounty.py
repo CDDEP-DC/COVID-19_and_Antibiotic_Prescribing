@@ -14,18 +14,18 @@ import numpy as np
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 
-OneDrive = "/Users/alisahamilton/Library/CloudStorage/OneDrive-CenterforDiseaseDynamics,Economics&Policy/CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data"
+OneDrive = "[Main file path]"
 
 state_abbr = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY']
 state_code = ['01', '02', '04', '05', '06', '08', '09', '10', '11', '12', '13', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51', '53', '54', '55', '56']
 
-statecodes = pd.read_csv(OneDrive + '/1. Data/StateCodes.csv')
+statecodes = pd.read_csv(OneDrive + '/Data/StateCodes.csv')
 statecodes = statecodes[['state_abbr', 'state_code']]
 
 ################## map productname to drug class ##############################
 
 #drug_class = pd.read_excel(OneDrive + "/IQVIAExampleData_DDDrevised.xlsx")
-drug_class = pd.read_csv(OneDrive + '/1. Data/DDDcrosswalk2020.csv')
+drug_class = pd.read_csv(OneDrive + '/Data/DDDcrosswalk2020.csv')
 drug_class = drug_class.groupby(['productname', 'drug','class'])['usc5_num'].first().reset_index()
 drug_class = drug_class[['productname', 'class']]
 drug_class = drug_class.drop_duplicates(subset=['productname'])
@@ -35,13 +35,13 @@ drug_class.loc[drug_class['productname'] == 'STREPTOMYCIN SULF', 'class'] = 'Ami
 
 #https://www.huduser.gov/portal/datasets/usps_crosswalk.html
 
-zip_county = pd.read_excel(OneDrive + "/1. Data/ZIP_COUNTY_122020.xlsx").sort_values(['ZIP', 'RES_RATIO'])
+zip_county = pd.read_excel(OneDrive + "/Data/ZIP_COUNTY_122020.xlsx").sort_values(['ZIP', 'RES_RATIO'])
 zip_county = zip_county.groupby(['ZIP']).agg({'RES_RATIO':'max', 'COUNTY':'last'}).reset_index() #taking county with highest proportion of residents
 zip_county = zip_county[['ZIP', 'COUNTY']]
 zip_county.loc[zip_county['COUNTY'] < 10000, 'COUNTY'] = '0' + zip_county['COUNTY'].map(str)
 zip_county.loc[zip_county['COUNTY'].map(float) >= 10000, 'COUNTY'] = zip_county['COUNTY'].map(str)
 zip_county = zip_county.rename(columns={'ZIP':'prescriber_zip', 'COUNTY':'FIPS'})
-zip_county.to_csv(OneDrive + '/1. Data/ZIP_FIPS_Crosswalk.csv')
+zip_county.to_csv(OneDrive + '/Data/ZIP_FIPS_Crosswalk.csv')
 
 print(len(zip_county['FIPS'].unique()))
 
@@ -50,7 +50,7 @@ print(len(zip_county['FIPS'].unique()))
 # https://www.census.gov/programs-surveys/popest/technical-documentation/research/evaluation-estimates/2020-evaluation-estimates/2010s-county-detail.html
 # https://www2.census.gov/programs-surveys/popest/technical-documentation/file-layouts/2010-2020/cc-est2020-alldata6.pdf
 
-pop = pd.read_csv(OneDrive + '/1. Data/CC-EST2020-ALLDATA6.csv', encoding = "ISO-8859-1", engine='python')
+pop = pd.read_csv(OneDrive + '/Data/CC-EST2020-ALLDATA6.csv', encoding = "ISO-8859-1", engine='python')
 pop = pop[['STATE', 'COUNTY', 'YEAR', 'AGEGRP', 'TOT_POP']] 
 pop = pop.loc[(pop['YEAR'] == 10) | (pop['YEAR'] == 11) | (pop['YEAR'] == 12) | (pop['YEAR'] == 14)] #2017-2020
 pop = pop.loc[(pop['AGEGRP'] == 0) | (pop['AGEGRP'] == 1) | (pop['AGEGRP'] == 2)] 
@@ -77,7 +77,7 @@ statepops = statepops.groupby('state')['Pop2020_all'].sum().reset_index()
 
 ############################ IQVIA data ######################################
 
-files = glob.glob(OneDrive + "/1. Data/*_Disaggregated.csv")
+files = glob.glob(OneDrive + "/Data/*_Disaggregated.csv")
 file_lst = []
 
 for file in files:
@@ -137,7 +137,6 @@ iqvia_final = iqvia2017.merge(iqvia2018, how='outer', on = ['FIPS', 'month'])
 iqvia_final = iqvia_final.merge(iqvia2019, how='outer', on = ['FIPS', 'month'])
 iqvia_final = iqvia_final.merge(iqvia2020, how='outer', on = ['FIPS', 'month'])
 
-
 print(pop['Pop2020_all'].sum())
 print(pop['Pop2020_children'].sum())
 
@@ -145,7 +144,7 @@ print(pop['Pop2020_children'].sum())
 
 # https://github.com/Dartmouth-DAC
 
-covid = pd.read_csv(OneDrive + "/1. Data/CasesandDeathsbyCounty.csv")
+covid = pd.read_csv(OneDrive + "/Data/CasesandDeathsbyCounty.csv")
 covid = covid.loc[covid['date'] < "2021-01-01"]
 covid = covid.groupby(['county', 'date', 'countypop']).agg({'countycaserate100k':'first'})
 covid = covid.reset_index()
@@ -170,7 +169,7 @@ covid.loc[covid['monthly_cases_per100k'] < 0, 'monthly_cases_per100k'] = 0
 # NCHS Urban-Rural Classification Scheme for Counties
 # https://www.cdc.gov/nchs/data_access/urban_rural.htm#2013_Urban-Rural_Classification_Scheme_for_Counties
 
-urcodes = pd.read_excel(OneDrive + '/1. Data/NCHSURCodes2013.xlsx')
+urcodes = pd.read_excel(OneDrive + '/Data/NCHSURCodes2013.xlsx')
 urcodes = urcodes[['FIPS code', '2013 code']]
 urcodes.loc[urcodes['FIPS code'] <  10000, 'FIPS'] = '0' + urcodes['FIPS code'].map(str)
 urcodes.loc[urcodes['FIPS code'] >= 10000, 'FIPS'] = urcodes['FIPS code'].map(str)
@@ -182,7 +181,7 @@ urcodes.rename(columns={'2013 code':'URcode'}, inplace = True)
 # SAIPE State and County Estimates for 2019
 # https://www.census.gov/data/datasets/2019/demo/saipe/2019-state-and-county.html
 
-poverty = pd.read_excel(OneDrive + '/1. Data/PovertyPercent_byCounty.xls')
+poverty = pd.read_excel(OneDrive + '/Data/PovertyPercent_byCounty.xls')
 poverty = poverty.loc[poverty['County FIPS'] != 0]
 poverty.loc[poverty['State FIPS'] <  10, 'FIPSstate'] = '0' + poverty['State FIPS'].map(str)
 poverty.loc[poverty['State FIPS'] >= 10, 'FIPSstate'] = poverty['State FIPS'].map(str)
@@ -199,7 +198,7 @@ poverty = poverty[['FIPS', 'PovertyPercent', 'COUNTY', 'STATE']]
 # https://www.census.gov/data/tables/time-series/demo/popest/2010s-counties-detail.html
 # https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/counties/asrh/
 
-minority = pd.read_csv(OneDrive+ '/1. Data/CC-EST2020-ALLDATA_MinorityGroups.csv', encoding = "ISO-8859-1", engine='python')
+minority = pd.read_csv(OneDrive+ '/Data/CC-EST2020-ALLDATA_MinorityGroups.csv', encoding = "ISO-8859-1", engine='python')
 minority = minority.loc[minority['AGEGRP'] == 0]
 minority = minority.loc[minority['YEAR'] == 12]
 minority = minority[['STATE', 'COUNTY', 'TOT_POP', 'WA_MALE', 'WA_FEMALE']]
@@ -212,11 +211,11 @@ census = census[['FIPS', 'PovertyPercent', 'MinorityPercent']]
 
 #### physicians ###
 
-healthcare = pd.read_csv(OneDrive + "/1. Data/USCounty_Demographic_Profile.csv")
+healthcare = pd.read_csv(OneDrive + "/Data/USCounty_Demographic_Profile.csv")
 healthcare = healthcare[['FIPS', 'Healthcare practitioners and technicians']]
 healthcare.rename(columns={'Healthcare practitioners and technicians':'HCworkers'}, inplace = True)
 
-industry = pd.read_stata(OneDrive + "/1. Data/industry.dta")
+industry = pd.read_stata(OneDrive + "/Data/industry.dta")
 industry.rename(columns={'fips':'FIPS'}, inplace = True)
 industry.rename(columns={'physicians':'physician_offices'}, inplace = True)
 industry = industry.drop(columns="fipstate")
@@ -239,7 +238,7 @@ healthcare = healthcare.drop(columns=['HCworkers', 'nursingcare', 'assistedlivin
 
 ##################### School closures EducationWeek ###########################
 
-school = pd.read_csv(OneDrive + '/1. Data/school_mnth_data2.csv')
+school = pd.read_csv(OneDrive + '/Data/school_mnth_data2.csv')
 school = school[['State_Abbr', 'Public School Enrollment', 'Status', 'month']]
 school.rename(columns={'State_Abbr':'state_abbr'}, inplace = True)
 school = school.merge(statecodes, how='left', on='state_abbr')
@@ -254,11 +253,11 @@ school_edu = school
 ################### School closures MCH #######################################
 # https://www.mchdata.com/covid19/schoolclosings
 
-district = pd.read_excel(OneDrive + "/1. Data/EDGE_GEOCODE_PUBLICLEA_1819.xlsx")
+district = pd.read_excel(OneDrive + "/Data/EDGE_GEOCODE_PUBLICLEA_1819.xlsx")
 district.rename(columns={'LEAID':'DistrictNCES', "NAME": "DistrictName_census", "STATE":"state"}, inplace = True)
 district = district[['DistrictNCES', 'DistrictName_census', 'CNTY', 'state']]
 
-mch = pd.read_excel(OneDrive + "/1. Data/MCH school data.xlsx")
+mch = pd.read_excel(OneDrive + "/Data/MCH school data.xlsx")
 mch = mch[['DistrictNCES', 'DistrictName', 'PhysicalState','Enrollment', 'OpenDate','TeachingMethod']]
 mch.rename(columns={"DistrictName": "DistrictName_MCH", "PhysicalState":"state"}, inplace = True)
 mch = mch.dropna()
@@ -298,7 +297,7 @@ school_mch = school[['FIPS', 'month', 'TeachingMethod']]
 # codebook: https://github.com/OxCGRT/covid-policy-tracker/blob/master/documentation/codebook.md
 
 # Global indice
-npi_indice = pd.read_excel(OneDrive + '/1. Data/OxCGRTUS_timeseries_all.xlsx')
+npi_indice = pd.read_excel(OneDrive + '/Data/OxCGRTUS_timeseries_all.xlsx')
 npi_indice['region_code'] = npi_indice['region_code'].str[-2:]
 npi_indice = npi_indice.loc[npi_indice['region_code'].isin(state_abbr)] 
 npi_indice = npi_indice.drop(['country_code', 'country_name', 'region_name', 'jurisdiction'], axis=1).set_index('region_code')
@@ -316,7 +315,7 @@ npi_indice.rename(columns={'state_code':'state'}, inplace = True)
 npi_indice = npi_indice[['state', 'month', 'npi_indice']]
 
 # Separate indicators (Movement, facial coverings, schools)
-npi_all = pd.read_csv(OneDrive + "/1. Data/OxCGRT_US_latest.csv")
+npi_all = pd.read_csv(OneDrive + "/Data/OxCGRT_US_latest.csv")
 npi_all['state_abbr'] = npi_all['RegionCode'].str[-2:]
 npi_all = npi_all.loc[npi_all['state_abbr'].isin(state_abbr)] 
 npi_all = npi_all.merge(statecodes, how='left', on='state_abbr')
@@ -336,7 +335,7 @@ npi_all = npi_all.merge(npi_all3, how='left', on=['state', 'month'])
 
 #by state
 # https://github.com/govex/COVID-19/tree/master/data_tables/testing_data
-testing = pd.read_csv(OneDrive + "/1. Data/testing_time_series_covid19_US.csv")
+testing = pd.read_csv(OneDrive + "/Data/testing_time_series_covid19_US.csv")
 testing = testing[['state', 'date', 'tests_combined_total']]
 testing = testing.loc[testing['state'].isin(state_abbr)]
 testing['date'] = pd.to_datetime(testing['date'])
@@ -380,68 +379,5 @@ final = final.merge(testing, how='left', on=['state', 'month'])
 final['tests_per100k'] = final['tests_per100k'].fillna(0)
 final = final.merge(healthcare, how='left', on='FIPS')
 
-final.to_csv(OneDrive + '/1. Data/IQVIA_2017_2020_byCounty_forRegression.csv')
-
-# finaltest = final['school_edu'].dropna()
-# finaltest2 = final['TeachingMethod'].dropna()
-# fips = list(final['FIPS'].unique())
-
-################## testing ###################################################
-
-iqvia = pd.read_csv(OneDrive + '/1. Data/IQVIA_2020_Disaggregated.csv')
-iqvia_dedup = iqvia.drop_duplicates()
-
-#print(iqvia['trx'].sum())
-
-#iqvia_hd = iqvia.head(1000)
-#iqvia['agegroup'] = 'all'
-iqvia1 = iqvia.groupby(['prescriber_st', 'prescriber_zip', 'year_month']).agg({'trx':'sum', 'DDD':'sum'}).reset_index()
-
-
-
-iqvia2 = iqvia.loc[(iqvia['AGE'] == '00-02') | (iqvia['AGE'] == '03-09')]
-iqvia2 = iqvia2.groupby(['prescriber_st', 'prescriber_zip', 'year_month']).agg({'trx':'sum', 'DDD':'sum'}).reset_index()
-iqvia2.rename(columns={'DDD':'child_DDD', 'trx':'child_trx'}, inplace = True)
-iqvia3 = iqvia1.merge(iqvia2, how='outer', on=['prescriber_st','prescriber_zip','year_month'])
-iqvia3 = iqvia3.merge(zip_county, how='left', on='prescriber_zip')
-
-
-iqvia_fips = iqvia3.loc[iqvia3['FIPS'].astype(float) > 0] #iqvia3['FIPS'].unique()
-iqvia_fips = iqvia_fips[['prescriber_zip','FIPS']]
-iqvia_fips['temp'] = 1
-iqvia_fips = iqvia_fips.groupby(['prescriber_zip','FIPS'])['temp'].first()
-iqvia4 = iqvia3.merge(iqvia_fips, how='left', on=['prescriber_zip', 'FIPS'])
-iqvia4.loc[(iqvia4['temp'] != 1), 'temp'] = 0
-
-iqvia_post = iqvia3.groupby(['FIPS', 'year_month']).agg({'DDD':'sum', 'trx':'sum', 'child_DDD':'sum', 'child_trx':'sum'}).reset_index()
-
-
-iqvia_ek = pd.read_csv("/Users/alisahamilton/Library/CloudStorage/OneDrive-SharedLibraries-CenterforDiseaseDynamics,Economics&Policy/Eili Klein - CDDEP Datasets/IMS Xponent/IMSDataByProductAndZip1999-2020/Batch6Data_2020_grouped 2.csv")
-
-
-print(iqvia_ek['projectedTRX'].sum())
-print(len(iqvia_ek['Zip'].unique()))
-
-
-print(iqvia4['trx'].sum())
-print(len(iqvia4['prescriber_zip'].unique()))
-print(len(iqvia4['FIPS'].unique()))
-
-
-print(iqvia_post['trx'].sum())
-dropped_zips = iqvia4.loc[iqvia4['temp'] == 0]
-print(dropped_zips['prescriber_zip'].unique())
-print(dropped_zips['prescriber_zip'].count())
-print(len(iqvia_post['FIPS'].unique()))
-
-dropped_zips_bystate = dropped_zips.groupby('prescriber_st')['prescriber_zip'].count()
-
-
-iqvia_zips = iqvia4['prescriber_zip'].unique()
-
-iqvia3 = iqvia3.groupby(['FIPS', 'year_month']).agg({'DDD':'sum', 'trx':'sum', 'child_DDD':'sum', 'child_trx':'sum'}).reset_index()
-
-print(iqvia3['trx'].sum())
-print(iqvia3['child_trx'].sum())
-
+final.to_csv(OneDrive + '/Data/IQVIA_2017_2020_byCounty_forRegression.csv')
 
