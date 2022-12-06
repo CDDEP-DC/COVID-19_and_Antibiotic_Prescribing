@@ -1,3 +1,7 @@
+# COVID-19 and Antibiotic Prescribing
+# Generate figures
+# Created by Suprena Poleon
+
 library(readxl)
 library(ggplot2)
 library(dplyr)
@@ -18,7 +22,7 @@ library("devtools")
 
 
 options(scipen=999)
-setwd("/Users/suprenapoleon/Center for Disease Dynamics, Economics & Policy/Eili Klein - CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/ProcessedData")
+setwd("[Main file path]/Data/")
 ########################### By Month (bar chart) ###############################
 # 2017
 Data2017 <- read.csv(file = "IQVIAAnalysis2017_AH_v2.csv")[,2:9] #find a better way to remove the 1st column
@@ -93,7 +97,7 @@ Data2020$year=format(Data2020$date, format="%Y")
 
 #Create new datasets
 DataAll <- rbind(Data2017,Data2018,Data2019, Data2020)
-write.csv(DataAll,"/Users/suprenapoleon/Center for Disease Dynamics, Economics & Policy/Eili Klein - CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/ProcessedData/data_2017_2020.csv", row.names = FALSE)
+write.csv(DataAll,"[Main file path]/Data/data_2017_2020.csv", row.names = FALSE)
 
 
 ByStateAll<-DataAll
@@ -203,7 +207,7 @@ ByStateAll2$trx2017_2019=rowMeans(ByStateAll2[,c("trx2017", "trx2018", "trx2019"
 ByStateAll2= ByStateAll2%>%mutate(percent_change = (((trx2020-trx2017_2019)/trx2017_2019)))
 ByStateAll2=arrange(ByStateAll2,percent_change)
 
-write.csv(ByStateAll2,"/Users/suprenapoleon/Center for Disease Dynamics, Economics & Policy/Eili Klein - CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/ProcessedData/PctChnge_ByState_trx.csv", row.names = FALSE)
+write.csv(ByStateAll2,"[Main file path]/Data/PctChnge_ByState_trx.csv", row.names = FALSE)
 
 setnames(ByStateAll2,"prescriber_st","state")
 ByStateAll2$percent_change=ByStateAll2$percent_change*100
@@ -331,7 +335,7 @@ ggplot(Classmeans, aes(x = reorder(class_cat,trx_per100k), y = trx_per100k, grou
 
 
 ########################AGE##########################
-byage=read_csv("/Users/suprenapoleon/Library/CloudStorage/OneDrive-CenterforDiseaseDynamics,Economics&Policy/CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/ProcessedData/IQVIA_AgeGroups_AllYears_v3_trx.csv")
+byage=read_csv("[Main file path]/Data/IQVIA_AgeGroups_AllYears_v3_trx.csv")
 byage$...1=NULL
 
 trx2017=subset(byage,year==2017)
@@ -420,88 +424,3 @@ ggplot(Agemeans, aes(x = age_group, y = trx_per100k, group=trx_per100k,fill = ye
   ggtitle(("Mean DDDs per 100k Population by Age for 2017-2020"))+
   coord_flip()+theme_bw()+theme(plot.title=element_text(hjust=0.5))
 
-
-########################Panels for Graphs id week2########################
-pdf(file = "/Users/suprenapoleon/Downloads/plot_id_week_abstract2.pdf",   # The directory you want to save the file in
-    width = 8, # The width of the plot in inches
-    height =8 ) # The height of the plot in inches
-
-bargraph=ggplot(Classmeans, aes(x = reorder(class_cat,trx_per100k), y = trx_per100k, group=trx_per100k,fill = year))+
-  geom_bar(stat = "identity", width = 0.5, position="dodge") +
-  xlab("Antibiotic Drug Class")+ylab("Mean Prescriptions per 100,000 Population")+
-  scale_fill_discrete(name="Year", labels=c("2017-2019 Average","2020"))+
-  ggtitle(("Mean Prescriptions per 100,000 Population by Class for 2017-2020"))+
-  scale_y_continuous(breaks = seq(0, 30000, by = 5000), labels=comma)+
-  coord_flip()+theme_bw()+theme(plot.title=element_text(hjust=0.5))
-
-bargraph2=ggplot(Agemeans, aes(x = age_group, y = trx_per100k, group=trx_per100k,fill = year))+
-  geom_bar(stat = "identity", width = 0.5, position="dodge") +
-  xlab("Age Group (Years)")+ylab("Mean Prescriptions per 100,000 Population")+
-  scale_fill_discrete(name="Year", labels=c("2017-2019 Average","2020"))+
-  scale_y_continuous(breaks = seq(0, 120000, by = 20000), labels=comma)+
-  ggtitle(("Mean Prescriptions per 100,000 Population by Age for 2017-2020"))+
-  coord_flip()+theme_bw()+theme(plot.title=element_text(hjust=0.5))
-
-plot_grid(bargraph,bargraph2, nrow=2,labels="AUTO", align = "hv")
-dev.off()
-
-
-####################id week abstract######################
-pdf(file = "/Users/suprenapoleon/Downloads/plot_id_week_abstract.pdf",   # The directory you want to save the file in
-    width = 8, # The width of the plot in inches
-    height =8 ) # The height of the plot in inches
-
-bargraph2=ggplot(Agemeans, aes(x = age_group, y = trx_per100k, group=trx_per100k,fill = year))+
-  geom_bar(stat = "identity", width = 0.5, position="dodge") +
-  xlab("Age Group (Years)")+ylab("Mean Prescriptions per 100,000 Population")+
-  scale_fill_discrete(name="Year", labels=c("2017-2019 Average","2020"))+
-  scale_y_continuous(breaks = seq(0, 120000, by = 20000), labels=comma)+
-  ggtitle(("Mean Prescriptions per 100,000 Population by Age for 2017-2020"))+
-  coord_flip()+theme_bw()+theme(plot.title=element_text(hjust=0.5))
-
-lineplot=ggplot(DataByMonthAll, aes(x=month,y=trx, group= Year,color=Year))+geom_line()+
-  theme_classic()+labs(x="Month", y="Prescriptions per 100,000 Population", title="Prescriptions per 100,000 Population by Month for 2017-2020")+
-  geom_point()+ scale_x_discrete(labels=month.abb)+scale_y_continuous(labels = comma)+
-  theme_bw()+theme(plot.title=element_text(hjust=0.5))
-
-plot_grid(lineplot,bargraph2, nrow=2,labels="AUTO")
-dev.off()
-
-#ggsave(filename = 'restest.png', p, width = 8, height = 8, dpi = 300,unit='in')
-
-
-
-
-
-
-
-
-
-
-#discarded code:
-
-#delete
-#Create Year variable
-trx2017$Year=2017
-trx2018$Year=2018
-trx2019$Year=2019
-trx2020$Year=2020
-
-####DELETE!
-
-#Create DDD column for row merge
-names(trx2017)[names(trx2017)=="TRX2017_per100k"]="TRX"
-names(trx2018)[names(trx2018)=="TRX2018_per100k"]="TRX"
-names(trx2019)[names(trx2019)=="TRX2019_per100k"]="TRX"
-names(trx2020)[names(trx2020)=="TRX2020_per100k"]="TRX"
-
-byage2=rbind(trx2017,trx2018,trx2019,trx2020)#merge data
-totalage=byage2%>%group_by(Year,age_group)
-
-agemeans_17_19=subset(totalage,Year<2020)
-agemeans_17_19=agemeans_17_19%>%group_by(Year,age_group)%>%summarise(trx_per100k=sum(TRX))
-
-agemeans_20=subset(totalage,Year==2020)
-agemeans_20=agemeans_20%>%group_by(Year,age_group)%>%summarise(trx_per100k=sum(TRX))
-
-#DELETE STOP
