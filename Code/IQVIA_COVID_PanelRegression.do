@@ -1,0 +1,438 @@
+* COVID-19 and Antibiotic Prescibing
+* Panel regression aand Descriptive Statistics
+* Created by Alisa Hamilton
+
+clear all
+set more off
+
+cd "/Users/alisahamilton/Center for Disease Dynamics, Economics & Policy/Eili Klein - CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/1. Data"
+
+import delimited using "IQVIA_2017_2020_byCounty_forRegression", clear
+
+// EducationWeek make school status factor variables
+replace school_edu = "hybrid/remote/trad" if school_edu == "no order"
+replace school_edu = "1" if school_edu == "" // July summer vacation
+replace school_edu = "1" if school_edu == "closed"
+replace school_edu = "2" if school_edu == "partially closed"
+replace school_edu = "2" if school_edu == "hybrid/remote/trad"
+replace school_edu = "3" if school_edu == "open"
+encode school_edu, gen(school)
+drop school_edu
+
+// MCH make school status factor variables
+replace teachingmethod = "1" if teachingmethod == "Closed" // July summer vacation
+replace teachingmethod = "2" if teachingmethod == "Hybrid/Other"
+replace teachingmethod = "3" if teachingmethod == "Open"
+encode teachingmethod, gen(school_mch)
+drop teachingmethod
+
+// OxGRT
+//rename school_status school
+//replace school = 1 if school == 2
+//replace school = 2 if school == 3
+//replace school = 2 if month == 6 | month == 7
+
+// recode NPIs. binary or 1/3
+replace movement_restrictions = 0 if movement_restrictions == 1 // 0 = No restrictions or recommended
+replace movement_restrictions = 1 if movement_restrictions == 2 // 1 = Restrictions in place
+replace face_coverings = 0 if face_coverings == 1 // No policy or recommended
+replace face_coverings = 0 if face_coverings == 2 // Recommended
+replace face_coverings = 0 if face_coverings == 3 // Required in all public spaces where distancing isn't possible
+replace face_coverings = 1 if face_coverings == 4 // 2 = Required in all situations outside home
+
+// generate squared variables for non-linear poverty and minority status
+gen povertysquared = povertypercent^2
+gen minoritysquared = minoritypercent^2
+
+//create logs
+gen log_ddd2020_per100k = log(ddd2020_per100k)
+gen log_ddd2019_per100k = log(ddd2019_per100k)
+gen log_ddd17_19avg_per100k = log(ddd17_19avg_per100k)
+gen log_cases = log(monthly_cases_per100k)
+gen log_child_ddd2020_per100k = log(child_ddd2020per100k)
+gen log_child_ddd2019_per100k = log(child_ddd2019per100k)
+gen log_child_ddd17_19avg_per100k = log(childddd17_19avg_per100k)
+gen log_tests_per100k = log(tests_per100k)
+
+gen log_trx2020_per100k = log(trx2020_per100k)
+gen log_trx17_19avg_per100k = log(trx17_19avg_per100k)
+gen log_child_2020trxper100k = log(child_trx2020per100k)
+gen log_childtrx17_19avg_per100k = log(childtrx17_19avg_per100k)
+
+gen log_hcworkers_per100k = log(hcworkers_per100k)
+gen log_nursingcare_per100k = log(nursingcare_per100k)
+gen log_assistedliving_per100k = log(assistedliving_per100k)
+
+gen log_physician_off_per100k = log(physician_off_per100k)
+replace log_physician_off_per100k = 0 if log_physician_off_per100k == .
+gen log_kidneydialysis_per100k = log(kidneydialysis_per100k)
+gen log_hospitals_per100k = log(hospitals_per100k)
+gen log_ltcfs_per100k = log(ltcfs_per100k)
+
+/*
+replace log_ddd2020_per100k = 0 if log_ddd2020_per100k == .
+replace log_ddd2019_per100k = 0 if log_ddd2019_per100k == .
+replace log_ddd17_19avg_per100k = 0 if log_ddd17_19avg_per100k == .
+replace log_ddd17_19avg_per100k = 0 if log_ddd17_19avg_per100k == .
+replace log_cases = 0 if log_cases == .
+replace log_child_ddd2020_per100k = 0 if log_child_ddd2020_per100k == .
+replace log_child_ddd2019_per100k = 0 if log_child_ddd2019_per100k == .
+replace log_child_ddd17_19avg_per100k = 0 if log_child_ddd17_19avg_per100k == .
+replace log_tests_per100k = 0 if log_tests_per100k == .
+
+replace log_trx2020_per100k = 0 if log_trx2020_per100k == .
+replace log_trx17_19avg_per100k = 0 if log_trx17_19avg_per100k == .
+replace log_child_2020trxper100k = 0 if log_child_2020trxper100k == .
+replace log_childtrx17_19avg_per100k = 0 if log_childtrx17_19avg_per100k == .
+*/
+
+// label variables
+label variable movement_restrictions "Internal movement restrictions"
+label variable face_coverings "Facial coverings"
+label variable school "State School Status"
+label variable school_mch "County School Status"
+label variable state "State"
+label variable urcode "Urbanization Level"
+label variable povertysquared "Percent of Population in Poverty Squared"
+label variable povertypercent "Percent of Population in Poverty"
+label variable tests_per100k "Monthly Tests per 100,000 Population"
+label variable monthly_cases_per100k "Monthly COVID-19 Cases per 100,000 Population"
+label variable month "Month"
+label variable minoritysquared "Percent of Population of Ethnic Minority Squared"
+label variable minoritypercent "Percent of Population of People of Color"
+label variable fips "FIPS Code"
+label variable ddd2020_per100k "2020 Monthly DDDs per 100,000 Population"
+label variable ddd17_19avg_per100k "2017-2019 Average Monthly DDDs per 100,000 Population"
+label variable log_cases "Log of Monthly COVID-19 Cases per 100,000 Population"
+label variable log_ddd2020_per100k "Log of 2020 Monthly DDDs per 100,000 Population"
+label variable log_ddd17_19avg_per100k "Log of 2017-2019 Average Monthly DDDs per 100,000 Population"
+label variable log_ddd2019_per100k "Log of 2019 Monthly DDDs per 100,000 Population"
+label variable child_ddd2020per100k "2020 Monthly DDDs per 100,000 Children 0-9"
+label variable log_child_ddd2020_per100k "Log of 2020 Monthly DDDs per 100,000 Children 0-9"
+label variable log_child_ddd17_19avg_per100k "Log of 2017-2019 Average Monthly DDDs per 100,000 Children 0-9"
+label variable log_child_ddd2019_per100k "Log of 2019 Monthly DDDs per 100,000 Children 0-9"
+label variable log_tests_per100k "Log of Monthly COVID-19 Tests per 100,000 Population"
+label variable log_trx2020_per100k "Log of 2020 Monthly Number of Prescriptions per 100,000 Population"
+label variable log_trx17_19avg_per100k "Log of 2017-2019 Monthly Number of Prescriptions per 100,000 Population"
+label variable log_child_2020trxper100k "Log of 2020 Monthly Number of Prescriptions per 100,000 Children 0-9"
+label variable log_childtrx17_19avg_per100k "Log of 2017-2019 Monthly Number of Prescriptions per 100,000 Children 0-9"
+label variable log_hcworkers_per100k "Log of Healthcare Workers per 100,000 Population"
+label variable log_nursingcare_per100k "Log of Nursing Care Facilities per 100,000 Population"
+label variable log_assistedliving_per100k "Log of Assisted Living Facilities per 100,000 Population"
+label variable log_physician_off_per100k "Log of Physicians' Offices per 100,000 Population"
+label variable log_kidneydialysis_per100k "Log of Kidney Dialysis Centers per 100,000 Population"
+label variable log_hospitals_per100k "Log of Hospitals per 100,000 Population"
+label variable log_ltcfs_per100k "Log of Long-term Care Facilities per 100,000 Population"
+
+// label school variables OxGRT
+//label define schoollabel 0 "No Measures/Open" 1 "Recommended Closing/Alterations/Hybrid" 2 "Required Closing All Levels/Summer Vacation"
+//label values school schoollabel
+
+// label NPI variables
+//label define movementlabel 0 "No measures" 1 "Recommend not to travel between regions/cities" 2 "Internal movement restrictions in place"
+label define movementlabel 0 "No restrictions/Recommended" 1 "Restrictions in place"
+label values movement_restrictions movementlabel
+
+// label define facelabel 0 "No policy" 0 "Recommended" 0 "Required in some situations/public spaces" 0 "Required in all public spaces where distancing not possible" 4 "Required outside the home at all times"
+label define facelabel 0 "No policy/Recommended/Required in some places" 1 "Required in all places outside the home"
+label values face_coverings facelabel
+
+// EducationWeek label values for schools, urbanization level, month, and state
+label define schoollabel 1 "Closed" 2 "Hybrid/Partially Closed/No Order" 3 "Ordered Open" 
+label values school schoollabel
+
+// MCH school label values for schools, urbanization level, month, and state
+label define schoolmch_label 1 "Closed" 2 "Hybrid/Other/Unknown" 3 "Open"
+label values school_mch schoolmch_label
+
+label define urcodelabel 1 "Large Central Metro" 2 "Large Fringe Metro" 3 "Medium Metro" 4 "Small Metro" 5 "Micropolitan" 6 "Noncore"
+label values urcode urcodelabel
+
+label define monthlabel 1 "January" 2 "February" 3 "March" 4 "April" 5 "May" 6 "June" 7 "July" 8 "August" 9 "September" 10 "October" 11 "November" 12 "December"
+label values month monthlabel
+
+label define statelabel 1 "Alabama" 2 "Alaska" 4 "Arizona" 5 "Arkansas" 6 "California" 8 "Colorado" 9 "Connecticut" 10 "Delaware" 11 "District of Columbia" 12 "Florida" 13 "Georgia" 15 "Hawaii" 16 "Idaho" 17 "Illinois" 18 "Indiana" 19 "Iowa" 20 "Kansas" 21 "Kentucky" 22 "Louisiana" 23 "Maine" 24 "Maryland" 25 "Massachusetts" 26 "Michigan" 27 "Minnesota" 28 "Mississippi" 29 "Missouri" 30 "Montana" 31 "Nebraska" 32 "Nevada" 33 "New Hampshire" 34 "New Jersey" 35 "New Mexico" 36 "New York" 37 "North Carolina" 38 "North Dakota" 39 "Ohio" 40 "Oklahoma" 41 "Oregon" 42 "Pennsylvania" 44 "Rhode Island" 45 "South Carolina" 46 "South Dakota" 47 "Tennessee" 48 "Texas" 49 "Utah" 50 "Vermont" 51 "Virginia" 53 "Washington" 54 "West Virginia" 55 "Wisconsin" 56 "Wyoming" 
+label values state statelabel
+
+// binary urban-rural variable
+// gen urban = 0
+// replace urban = 1 if urcode == 1 | urcode == 2 | urcode == 3
+// eplace minoritypercent = round(minoritypercent)
+
+//drop if month < 7
+xtset fips month
+save finaldataset, replace
+//drop if month < 3
+export delimited using "IQVIA_2017_2020_byCounty_forFigures.csv", replace
+
+*************************** final model ****************************************
+
+cd "/Users/alisahamilton/Center for Disease Dynamics, Economics & Policy/Eili Klein - CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/1. Data"
+
+use finaldataset, clear
+//drop if month < 3
+xtset fips month
+//use random effects and logs of cases and previous years' prescribing
+
+cd "/Users/alisahamilton/Center for Disease Dynamics, Economics & Policy/Eili Klein - CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/1. Results"
+
+//trx all ages MCH
+xtreg log_trx2020_per100k log_cases log_tests_per100k log_trx17_19avg_per100k log_physician_off_per100k povertypercent minoritypercent i.school_mch i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
+outreg2 using "iqvia_covid_regression_trx_mch.xls", replace excel ci sideway label dec(3) noobs
+
+// trx children
+xtreg log_child_2020trxper100k log_cases log_tests_per100k log_childtrx17_19avg_per100k log_physician_off_per100k povertypercent minoritypercent i.school_mch i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
+outreg2 using "iqvia_covid_regression_children_trx_mch.xls", replace excel ci sideway label dec(3) noobs
+
+//trx all ages EDU
+xtreg log_trx2020_per100k log_cases log_tests_per100k log_trx17_19avg_per100k log_physician_off_per100k povertypercent minoritypercent i.school i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
+outreg2 using "iqvia_covid_regression_trx_edu.xls", replace excel ci sideway label dec(3) noobs
+
+//trx children EDU
+xtreg log_child_2020trxper100k log_cases log_tests_per100k log_childtrx17_19avg_per100k log_physician_off_per100k povertypercent minoritypercent i.school i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
+outreg2 using "iqvia_covid_regression_children_trx_edu.xls", replace excel ci sideway label dec(3) noobs
+
+
+// ddd all ages
+xtreg log_ddd2020_per100k log_cases log_tests_per100k log_ddd17_19avg_per100k log_physician_off_per100k povertypercent minoritypercent i.school_mch i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
+outreg2 using "iqvia_covid_regression_ddd_mch.xls", replace excel ci sideway label dec(3) noobs
+
+// ddd children *NOT USING
+xtreg log_child_ddd2020_per100k log_cases log_tests_per100k log_child_ddd17_19avg_per100k log_physician_off_per100k povertypercent minoritypercent i.school i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
+outreg2 using "iqvia_covid_regression_children_ddd_edu.xls", replace excel ci sideway label dec(3) noobs
+
+
+************************ comparing re and fe ***********************************
+xtreg ddd2020_per100k monthly_cases_per100k ddd17_19avg_per100k povertypercent povertysquared minoritypercent minoritysquared i.school i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
+estimates store ran
+
+xtreg ddd2020_per100k monthly_cases_per100k ddd17_19avg_per100k povertypercent povertysquared minoritypercent minoritysquared i.school i.movement_restrictions i.face_coverings  i.urcode i.month i.state, fe
+estimates store fix
+
+hausman fix ran
+
+************** quantile regression testing *************************************
+
+areg ddd2020_per100k monthly_cases_per100k ddd17_19avg_per100k i.school i.movement_restrictions i.face_coverings i.month, absorb(fips) cluster(fips) // poverty, minority, urcode and state ommitted due to collinearity
+
+xtqreg ddd2020_per100k monthly_cases_per100k ddd17_19avg_per100k i.school i.movement_restrictions i.face_coverings i.month
+
+qregpd ddd2020_per100k monthly_cases_per100k ddd17_19avg_per100k povertypercent povertysquared minoritypercent minoritysquared i.school i.movement_restrictions i.face_coverings i.urcode i.state, id(fips) fix(month) optimize(mcmc) noisy draws (1000) quantile(25) // factor-variable and time-series operators not allowed
+
+xi:qreg ddd2020_per100k monthly_cases_per100k , q(0.5) // this crashes if I include i.fips
+grqreg monthly_cases_per100k, ci ols olsci level(95)
+
+//trying with logs
+gen log_ddd2020 = log(ddd2020_per100k)
+gen log_ddd1719 = log(ddd17_19avg_per100k)
+gen log_poverty = log(povertypercent)
+gen log_minority = log(minoritypercent)
+gen log_cases = log(monthly_cases_per100k)
+
+qreg log_ddd2020 log_cases log_ddd1719 log_poverty log_minority i.school i.movement_restrictions i.face_coverings i.urcode i.month i.fips, q(0.5) //many fips ommitted. takes a long time. Error=insufficient observations
+
+//https://www.statalist.org/forums/forum/general-stata-discussion/general/1464700-figure-for-panel-quantile-regression
+xtqreg ddd2020_per100k monthly_cases_per100k ddd17_19avg_per100k povertypercent povertysquared minoritypercent minoritysquared i.school i.movement_restrictions i.face_coverings i.urcode i.month i.state, i(fips) // poverty, minority, urcode, and state ommitted due to collinearity 
+
+xtqreg log_ddd2020 log_cases log_ddd1719 log_poverty log_minority i.school i.movement_restrictions i.face_coverings i.urcode i.month i.state, i(fips) // poverty, minority, urcode, and state still ommitted
+
+qregplot monthly_cases_per100k, ols olsopt(abs(fips) robust) //userdefined function for plotting xtqreg. looks really weird
+
+
+**************** Descriptives ***************************************************
+cd "/Users/alisahamilton/Center for Disease Dynamics, Economics & Policy/Eili Klein - CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/1. Data"
+
+use finaldataset, clear
+drop v1
+
+/////////// continuous descriptives table TRX
+ci means monthly_cases_per100k
+ci means tests_per100k
+ci means trx2020_per100k
+ci means trx17_19avg_per100k
+ci means child_trx2020per100k
+ci means childtrx17_19avg_per100k
+ci means physician_off_per100k
+ci means povertypercent
+ci means minoritypercent
+
+summarize monthly_cases_per100k
+summarize trx2020_per100k
+summarize trx17_19avg_per100k
+summarize child_2020trxper100k
+summarize childtrx17_19avg_per100k
+
+/// frequency and percent ///
+tab school_mch
+tab movement_restrictions
+tab face_coverings
+tab urcode
+tab month
+tab state
+
+/// CIs by categorical ///
+// all ages trx
+sort school_mch
+by school_mch: ci means trx2020_per100k
+sort movement_restrictions
+by movement_restrictions: ci means trx2020_per100k
+sort face_coverings
+by face_coverings: ci means trx2020_per100k
+sort urcode
+by urcode: ci means trx2020_per100k
+sort month
+by month: ci means trx2020_per100k
+sort state
+by state: ci means trx2020_per100k
+
+//children trx
+sort school_mch
+by school_mch: ci means child_trx2020per100k
+sort movement_restrictions
+by movement_restrictions: ci means child_trx2020per100k
+sort face_coverings
+by face_coverings: ci means child_trx2020per100k
+sort urcode
+by urcode: ci means child_trx2020per100k
+sort month
+by month: ci means child_trx2020per100k
+sort state
+by state: ci means child_trx2020per100k
+
+//cases per 100k
+sort school_mch
+by school_mch: ci means monthly_cases_per100k
+sort movement_restrictions
+by movement_restrictions: ci means monthly_cases_per100k
+sort face_coverings
+by face_coverings: ci means monthly_cases_per100k
+sort urcode
+by urcode: ci means monthly_cases_per100k
+sort month
+by month: ci means monthly_cases_per100k
+sort state
+by state: ci means monthly_cases_per100k
+
+//DDD ANOVA
+oneway ddd2020_per100k school_mch, tabulate
+oneway ddd2020_per100k movement_restrictions, tabulate
+oneway ddd2020_per100k face_coverings, tabulate
+oneway ddd2020_per100k urcode, tabulate
+oneway ddd2020_per100k month, tabulate
+oneway ddd2020_per100k state, tabulate
+
+oneway child_2020dddper100k school, tabulate
+oneway child_2020dddper100k movement_restrictions, tabulate
+oneway child_2020dddper100k face_coverings, tabulate
+oneway child_2020dddper100k urcode, tabulate
+oneway child_2020dddper100k month, tabulate
+oneway child_2020dddper100k state, tabulate
+
+//TRX ANOVA
+oneway trx2020_per100k school_mch, tabulate
+oneway trx2020_per100k movement_restrictions, tabulate
+oneway trx2020_per100k face_coverings, tabulate
+oneway trx2020_per100k urcode, tabulate
+oneway trx2020_per100k month, tabulate
+oneway trx2020_per100k state, tabulate
+
+oneway child_2020trxper100k school, tabulate
+oneway child_2020trxper100k movement_restrictions, tabulate
+oneway child_2020trxper100k face_coverings, tabulate
+oneway child_2020trxper100k urcode, tabulate
+oneway child_2020trxper100k month, tabulate
+oneway child_2020trxper100k state, tabulate
+
+//Cases ANOVA
+oneway monthly_cases_per100k school, tabulate
+oneway monthly_cases_per100k movement_restrictions, tabulate
+oneway monthly_cases_per100k face_coverings, tabulate
+oneway monthly_cases_per100k urcode, tabulate
+oneway monthly_cases_per100k month, tabulate
+oneway monthly_cases_per100k state, tabulate
+
+///DDDs descriptives
+summarize monthly_cases_per100k
+summarize ddd2020_per100k
+summarize ddd17_19avg_per100k
+summarize child_2020dddper100k
+summarize childddd17_19avg_per100k
+summarize tests_per100k
+summarize physician_off_per100k
+summarize povertypercent
+summarize minoritypercent
+
+//// medians and percentiles////
+// Kruskal–Wallis test TRX
+kwallis trx2020_per100k, by(school_mch)
+kwallis trx2020_per100k, by(movement_restrictions)
+kwallis trx2020_per100k, by(face_coverings)
+kwallis trx2020_per100k, by(urcode)
+kwallis trx2020_per100k, by(month)
+kwallis trx2020_per100k, by(state)
+
+// Kruskal–Wallis test TRX children
+kwallis child_2020trxper100k, by(school_mch)
+kwallis child_2020trxper100k, by(movement_restrictions)
+kwallis child_2020trxper100k, by(face_coverings)
+kwallis child_2020trxper100k, by(urcode)
+kwallis child_2020trxper100k, by(month)
+kwallis child_2020trxper100k, by(state)
+
+// Kruskal–Wallis test cases_per100k
+kwallis cases_per100k, by(school_mch)
+kwallis cases_per100k, by(movement_restrictions)
+kwallis cases_per100k, by(face_coverings)
+kwallis cases_per100k, by(urcode)
+kwallis cases_per100k, by(month)
+kwallis cases_per100k, by(state)
+
+// median and CI TRX all
+sort school_mch
+by school_mch: summarize trx2020_per100k, detail
+sort movement_restrictions
+by movement_restrictions: summarize trx2020_per100k, detail
+sort face_coverings
+by face_coverings: summarize trx2020_per100k, detail
+sort urcode
+by urcode: summarize trx2020_per100k, detail
+sort month
+by month: summarize trx2020_per100k, detail
+sort state
+by state: summarize trx2020_per100k, detail
+
+// median and CI TRX children
+sort school_mch
+by school_mch: summarize child_2020trxper100k, detail
+sort movement_restrictions
+by movement_restrictions: summarize child_2020trxper100k, detail
+sort face_coverings
+by face_coverings: summarize child_2020trxper100k, detail
+sort urcode
+by urcode: summarize child_2020trxper100k, detail
+sort month
+by month: summarize child_2020trxper100k, detail
+sort state
+by state: summarize child_2020trxper100k, detail
+
+// median and CI TRX covid
+sort school_mch
+by school_mch: summarize cases_per100k, detail
+sort movement_restrictions
+by movement_restrictions: summarize cases_per100k, detail
+sort face_coverings
+by face_coverings: summarize cases_per100k, detail
+sort urcode
+by urcode: summarize cases_per100k, detail
+sort month
+by month: summarize cases_per100k, detail
+sort state
+by state: summarize cases_per100k, detail
+
+tab school
+
+
+
+
+
+
