@@ -5,7 +5,7 @@
 clear all
 set more off
 
-cd "/Users/alisahamilton/Center for Disease Dynamics, Economics & Policy/Eili Klein - CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/1. Data"
+cd "[Main file path]/Data"
 
 import delimited using "IQVIA_2017_2020_byCounty_forRegression", clear
 
@@ -25,12 +25,6 @@ replace teachingmethod = "2" if teachingmethod == "Hybrid/Other"
 replace teachingmethod = "3" if teachingmethod == "Open"
 encode teachingmethod, gen(school_mch)
 drop teachingmethod
-
-// OxGRT
-//rename school_status school
-//replace school = 1 if school == 2
-//replace school = 2 if school == 3
-//replace school = 2 if month == 6 | month == 7
 
 // recode NPIs. binary or 1/3
 replace movement_restrictions = 0 if movement_restrictions == 1 // 0 = No restrictions or recommended
@@ -68,23 +62,6 @@ replace log_physician_off_per100k = 0 if log_physician_off_per100k == .
 gen log_kidneydialysis_per100k = log(kidneydialysis_per100k)
 gen log_hospitals_per100k = log(hospitals_per100k)
 gen log_ltcfs_per100k = log(ltcfs_per100k)
-
-/*
-replace log_ddd2020_per100k = 0 if log_ddd2020_per100k == .
-replace log_ddd2019_per100k = 0 if log_ddd2019_per100k == .
-replace log_ddd17_19avg_per100k = 0 if log_ddd17_19avg_per100k == .
-replace log_ddd17_19avg_per100k = 0 if log_ddd17_19avg_per100k == .
-replace log_cases = 0 if log_cases == .
-replace log_child_ddd2020_per100k = 0 if log_child_ddd2020_per100k == .
-replace log_child_ddd2019_per100k = 0 if log_child_ddd2019_per100k == .
-replace log_child_ddd17_19avg_per100k = 0 if log_child_ddd17_19avg_per100k == .
-replace log_tests_per100k = 0 if log_tests_per100k == .
-
-replace log_trx2020_per100k = 0 if log_trx2020_per100k == .
-replace log_trx17_19avg_per100k = 0 if log_trx17_19avg_per100k == .
-replace log_child_2020trxper100k = 0 if log_child_2020trxper100k == .
-replace log_childtrx17_19avg_per100k = 0 if log_childtrx17_19avg_per100k == .
-*/
 
 // label variables
 label variable movement_restrictions "Internal movement restrictions"
@@ -124,10 +101,6 @@ label variable log_kidneydialysis_per100k "Log of Kidney Dialysis Centers per 10
 label variable log_hospitals_per100k "Log of Hospitals per 100,000 Population"
 label variable log_ltcfs_per100k "Log of Long-term Care Facilities per 100,000 Population"
 
-// label school variables OxGRT
-//label define schoollabel 0 "No Measures/Open" 1 "Recommended Closing/Alterations/Hybrid" 2 "Required Closing All Levels/Summer Vacation"
-//label values school schoollabel
-
 // label NPI variables
 //label define movementlabel 0 "No measures" 1 "Recommend not to travel between regions/cities" 2 "Internal movement restrictions in place"
 label define movementlabel 0 "No restrictions/Recommended" 1 "Restrictions in place"
@@ -154,11 +127,6 @@ label values month monthlabel
 label define statelabel 1 "Alabama" 2 "Alaska" 4 "Arizona" 5 "Arkansas" 6 "California" 8 "Colorado" 9 "Connecticut" 10 "Delaware" 11 "District of Columbia" 12 "Florida" 13 "Georgia" 15 "Hawaii" 16 "Idaho" 17 "Illinois" 18 "Indiana" 19 "Iowa" 20 "Kansas" 21 "Kentucky" 22 "Louisiana" 23 "Maine" 24 "Maryland" 25 "Massachusetts" 26 "Michigan" 27 "Minnesota" 28 "Mississippi" 29 "Missouri" 30 "Montana" 31 "Nebraska" 32 "Nevada" 33 "New Hampshire" 34 "New Jersey" 35 "New Mexico" 36 "New York" 37 "North Carolina" 38 "North Dakota" 39 "Ohio" 40 "Oklahoma" 41 "Oregon" 42 "Pennsylvania" 44 "Rhode Island" 45 "South Carolina" 46 "South Dakota" 47 "Tennessee" 48 "Texas" 49 "Utah" 50 "Vermont" 51 "Virginia" 53 "Washington" 54 "West Virginia" 55 "Wisconsin" 56 "Wyoming" 
 label values state statelabel
 
-// binary urban-rural variable
-// gen urban = 0
-// replace urban = 1 if urcode == 1 | urcode == 2 | urcode == 3
-// eplace minoritypercent = round(minoritypercent)
-
 //drop if month < 7
 xtset fips month
 save finaldataset, replace
@@ -167,14 +135,14 @@ export delimited using "IQVIA_2017_2020_byCounty_forFigures.csv", replace
 
 *************************** final model ****************************************
 
-cd "/Users/alisahamilton/Center for Disease Dynamics, Economics & Policy/Eili Klein - CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/1. Data"
+cd "[Main file path]/Data"
 
 use finaldataset, clear
 //drop if month < 3
 xtset fips month
 //use random effects and logs of cases and previous years' prescribing
 
-cd "/Users/alisahamilton/Center for Disease Dynamics, Economics & Policy/Eili Klein - CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/1. Results"
+cd "[Maine file path]/Results"
 
 //trx all ages MCH
 xtreg log_trx2020_per100k log_cases log_tests_per100k log_trx17_19avg_per100k log_physician_off_per100k povertypercent minoritypercent i.school_mch i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
@@ -192,55 +160,13 @@ outreg2 using "iqvia_covid_regression_trx_edu.xls", replace excel ci sideway lab
 xtreg log_child_2020trxper100k log_cases log_tests_per100k log_childtrx17_19avg_per100k log_physician_off_per100k povertypercent minoritypercent i.school i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
 outreg2 using "iqvia_covid_regression_children_trx_edu.xls", replace excel ci sideway label dec(3) noobs
 
-
 // ddd all ages
 xtreg log_ddd2020_per100k log_cases log_tests_per100k log_ddd17_19avg_per100k log_physician_off_per100k povertypercent minoritypercent i.school_mch i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
 outreg2 using "iqvia_covid_regression_ddd_mch.xls", replace excel ci sideway label dec(3) noobs
 
-// ddd children *NOT USING
-xtreg log_child_ddd2020_per100k log_cases log_tests_per100k log_child_ddd17_19avg_per100k log_physician_off_per100k povertypercent minoritypercent i.school i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
-outreg2 using "iqvia_covid_regression_children_ddd_edu.xls", replace excel ci sideway label dec(3) noobs
-
-
-************************ comparing re and fe ***********************************
-xtreg ddd2020_per100k monthly_cases_per100k ddd17_19avg_per100k povertypercent povertysquared minoritypercent minoritysquared i.school i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
-estimates store ran
-
-xtreg ddd2020_per100k monthly_cases_per100k ddd17_19avg_per100k povertypercent povertysquared minoritypercent minoritysquared i.school i.movement_restrictions i.face_coverings  i.urcode i.month i.state, fe
-estimates store fix
-
-hausman fix ran
-
-************** quantile regression testing *************************************
-
-areg ddd2020_per100k monthly_cases_per100k ddd17_19avg_per100k i.school i.movement_restrictions i.face_coverings i.month, absorb(fips) cluster(fips) // poverty, minority, urcode and state ommitted due to collinearity
-
-xtqreg ddd2020_per100k monthly_cases_per100k ddd17_19avg_per100k i.school i.movement_restrictions i.face_coverings i.month
-
-qregpd ddd2020_per100k monthly_cases_per100k ddd17_19avg_per100k povertypercent povertysquared minoritypercent minoritysquared i.school i.movement_restrictions i.face_coverings i.urcode i.state, id(fips) fix(month) optimize(mcmc) noisy draws (1000) quantile(25) // factor-variable and time-series operators not allowed
-
-xi:qreg ddd2020_per100k monthly_cases_per100k , q(0.5) // this crashes if I include i.fips
-grqreg monthly_cases_per100k, ci ols olsci level(95)
-
-//trying with logs
-gen log_ddd2020 = log(ddd2020_per100k)
-gen log_ddd1719 = log(ddd17_19avg_per100k)
-gen log_poverty = log(povertypercent)
-gen log_minority = log(minoritypercent)
-gen log_cases = log(monthly_cases_per100k)
-
-qreg log_ddd2020 log_cases log_ddd1719 log_poverty log_minority i.school i.movement_restrictions i.face_coverings i.urcode i.month i.fips, q(0.5) //many fips ommitted. takes a long time. Error=insufficient observations
-
-//https://www.statalist.org/forums/forum/general-stata-discussion/general/1464700-figure-for-panel-quantile-regression
-xtqreg ddd2020_per100k monthly_cases_per100k ddd17_19avg_per100k povertypercent povertysquared minoritypercent minoritysquared i.school i.movement_restrictions i.face_coverings i.urcode i.month i.state, i(fips) // poverty, minority, urcode, and state ommitted due to collinearity 
-
-xtqreg log_ddd2020 log_cases log_ddd1719 log_poverty log_minority i.school i.movement_restrictions i.face_coverings i.urcode i.month i.state, i(fips) // poverty, minority, urcode, and state still ommitted
-
-qregplot monthly_cases_per100k, ols olsopt(abs(fips) robust) //userdefined function for plotting xtqreg. looks really weird
-
-
 **************** Descriptives ***************************************************
-cd "/Users/alisahamilton/Center for Disease Dynamics, Economics & Policy/Eili Klein - CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/1. Data"
+
+cd "[Main file path]/Data"
 
 use finaldataset, clear
 drop v1
