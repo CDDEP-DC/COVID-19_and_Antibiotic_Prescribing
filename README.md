@@ -10,3 +10,4 @@ WORKFLOW
 1. Replace "[Main file path] in all files in Code folder
 2. IQVIA_2017_2020_byCounty.py reads files in Data folder and outputs Data/IQVIA_2017_2020_byCounty_forRegression.csv
 3. IQVIA_AgeClass_byState.py reads files in Data folder and outputs Data/IQVIA_AgeClass_byState.csv which is used to generate figures.
+4. IQVIA_COVID_PanelRegression.do reads Data/IQVIA_2017_2020_byCounty_forRegression.csv and outputs Data/finaldataset.dta and Data/IQVIA_2017_2020_byCounty_forFigures.csv
