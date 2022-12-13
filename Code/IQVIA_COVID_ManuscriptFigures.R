@@ -1,12 +1,15 @@
+# COVID-19 and Antibiotic Prescribing
+# Generate Figures 1 and 2
+# Created by Suprena Poleon
+
 options(scipen=999)
 library(ggplot2)
 library(cowplot)
 library(grid)
 library(gridExtra)
 
-
-setwd("/Users/suprenapoleon/Library/CloudStorage/OneDrive-CenterforDiseaseDynamics,Economics&Policy/CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/1. Data")
-dat1 <- read.csv(file = "IQVIA_AgeClass_byState.csv") #find a better way to remove the 1st column
+setwd("[Maine file path]/Data")
+dat1 <- read.csv(file = "IQVIA_AgeClass_byState.csv") 
 dat1$X=NULL
 
 Data2017=subset(dat1, year==2017)
@@ -17,8 +20,6 @@ ByMonth2017 <- ByMonth2017 %>% group_by(POPEST2017_CIV,month)%>%summarise(trx=su
 ByMonth2017$trx_per100k=((ByMonth2017$trx/ByMonth2017$POPEST2017_CIV)*100000)
 ByMonth2017$POPEST2017_CIV=NULL
 ByMonth2017$year=2017
-#ByMonth2017$trx2017=NULL
-
 
 Data2018=subset(dat1, year==2018)
 Data2018=select(Data2018, -(7))
@@ -30,8 +31,6 @@ ByMonth2018 <- ByMonth2018 %>% group_by(POPEST2018_CIV,month)%>%summarise(trx=su
 ByMonth2018$trx_per100k=((ByMonth2018$trx/ByMonth2018$POPEST2018_CIV)*100000)
 ByMonth2018$POPEST2018_CIV=NULL
 ByMonth2018$year=2018
-#ByMonth2018$trx2018=NULL
-
 
 Data2019=subset(dat1, year==2019)
 Data2019=select(Data2019, -(7:8))
@@ -43,8 +42,6 @@ ByMonth2019 <- ByMonth2019 %>% group_by(POPEST2019_CIV,month)%>%summarise(trx=su
 ByMonth2019$trx_per100k=((ByMonth2019$trx/ByMonth2019$POPEST2019_CIV)*100000)
 ByMonth2019$POPEST2019_CIV=NULL
 ByMonth2019$year=2019
-#ByMonth2019$trx2019=NULL
-
 
 Data2020=subset(dat1, year==2020)
 Data2020=select(Data2020, -(7:9))
@@ -55,7 +52,6 @@ ByMonth2020 <- ByMonth2020 %>% group_by(POPEST2020_CIV,month)%>%summarise(trx=su
 ByMonth2020$trx_per100k=((ByMonth2020$trx/ByMonth2020$POPEST2020_CIV)*100000)
 ByMonth2020$POPEST2020_CIV=NULL
 ByMonth2020$year=2020
-#ByMonth2020$trx2020=NULL
 
 Data2017$popestimate=Data2017$POPEST2017_CIV
 Data2017$POPEST2017_CIV=NULL
@@ -63,7 +59,6 @@ Data2017$POPEST2017_CIV=NULL
 Data2018$popestimate=Data2018$POPEST2018_CIV
 Data2018$POPEST2018_CIV=NULL
 Data2018 <- Data2018[complete.cases(Data2018), ]
-
 
 Data2019$popestimate=Data2019$POPEST2019_CIV
 Data2019$POPEST2019_CIV=NULL
@@ -82,7 +77,6 @@ mean(data_17_19$trx_per100k)
 data_20=subset(Data2020,month>=3)
 data_20 <- data_20 %>% group_by(year)%>%summarise(trx=sum(trx),popestimate=sum(unique(popestimate)))
 data_20$trx_per100k=(data_20$trx/data_20$popestimate)*100000
-
 
 ###################################BY MONTH######################################
 #rowmerge
@@ -121,7 +115,7 @@ ByStateAll2$trx2017_2019=rowMeans(ByStateAll2[,c("trx2017", "trx2018", "trx2019"
 ByStateAll2= ByStateAll2%>%mutate(percent_change = (((trx2020-trx2017_2019)/trx2017_2019)))
 ByStateAll2=arrange(ByStateAll2,percent_change)
 
-write.csv(ByStateAll2,"/Users/suprenapoleon/Center for Disease Dynamics, Economics & Policy/Eili Klein - CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/ProcessedData/PctChnge_ByState_trx.csv", row.names = FALSE)
+write.csv(ByStateAll2,"[Main file path]/Data/PctChnge_ByState_trx.csv", row.names = FALSE)
 
 setnames(ByStateAll2,"prescriber_st","state")
 ByStateAll2$percent_change=ByStateAll2$percent_change*100
@@ -133,7 +127,7 @@ plot_usmap(data = ByStateAll2, values = "percent_change", color = as.factor("per
                                             subtitle = "Percent Decline in Prescriptions per 100,000 Population by State")
 
 #################Month and State Plot Panel##################
-pdf(file = "/Users/suprenapoleon/Library/CloudStorage/OneDrive-CenterforDiseaseDynamics,Economics&Policy/CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/1. Manuscripts/JAMA IM/Figures/Figure1_Prescriptions_by_Month_and_State.pdf",   # The directory you want to save the file in
+pdf(file = "[Main file path]/Results/Figure1_Prescriptions_by_Month_and_State.pdf",   # The directory you want to save the file in
     width = 8, # The width of the plot in inches
     height =8 ) # The height of the plot in inches
 
@@ -232,8 +226,6 @@ ggplot(Classmeans, aes(x = reorder(class_cat,trx_per100k), y = trx_per100k, grou
   ggtitle(("Mean Prescriptions per 100k Population by Class for 2017-2020"))+
   coord_flip()+theme_bw()+theme(plot.title=element_text(hjust=0.5))
 
-
-
 ########################AGE##########################3
 #byage=read_csv("/Users/suprenapoleon/Library/CloudStorage/OneDrive-CenterforDiseaseDynamics,Economics&Policy/CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/ProcessedData/IQVIA_AgeGroups_AllYears_v3_trx.csv")
 #byage$...1=NULL
@@ -270,7 +262,7 @@ ggplot(Agemeans, aes(x = age_group, y = trx_per100k, group=trx_per100k,fill = ye
   coord_flip()+theme_bw()+theme(plot.title=element_text(hjust=0.5))
 
 ################Class and Age Means Plot Panel#########################
-pdf(file = "/Users/suprenapoleon/Library/CloudStorage/OneDrive-CenterforDiseaseDynamics,Economics&Policy/CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/1. Manuscripts/JAMA IM/Figures/Figure2_Prescriptions_by_Class_and_Age_Means.pdf",   # The directory you want to save the file in
+pdf(file = "[Main file path]/Results/Figure2_Prescriptions_by_Class_and_Age_Means.pdf",   # The directory you want to save the file in
     width = 8, # The width of the plot in inches
     height =8 ) # The height of the plot in inches
 
