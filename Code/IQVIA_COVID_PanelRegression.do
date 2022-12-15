@@ -5,8 +5,8 @@
 clear all
 set more off
 
+// Import data
 cd "[Main file path]/Data"
-
 import delimited using "IQVIA_2017_2020_byCounty_forRegression", clear
 
 // EducationWeek make school status factor variables
@@ -139,13 +139,18 @@ cd "[Main file path]/Data"
 use finaldataset, clear
 //drop if month < 3
 xtset fips month
-//use random effects and logs of cases and previous years' prescribing
 
-cd "[Maine file path]/Results"
+cd "[Main file path]/Results"
 
 //trx all ages MCH
 xtreg log_trx2020_per100k log_cases log_tests_per100k log_trx17_19avg_per100k log_physician_off_per100k povertypercent minoritypercent i.school_mch i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
 outreg2 using "iqvia_covid_regression_trx_mch.xls", replace excel ci sideway label dec(3) noobs
+
+// check residuals and rule out poisson or negative binomial regression
+histogram log_trx2020_per100k, normal
+predict Fitted, xb
+predict Epsilon, e
+twoway (scatter Epsilon Fitted), ytitle(Epsilon residuals) xtitle(Fitted values)
 
 // trx children
 xtreg log_child_2020trxper100k log_cases log_tests_per100k log_childtrx17_19avg_per100k log_physician_off_per100k povertypercent minoritypercent i.school_mch i.movement_restrictions i.face_coverings i.urcode i.month i.state, re
@@ -166,11 +171,10 @@ outreg2 using "iqvia_covid_regression_ddd_mch.xls", replace excel ci sideway lab
 **************** Descriptives ***************************************************
 
 cd "[Main file path]/Data"
-
 use finaldataset, clear
 drop v1
 
-/////////// continuous descriptives table TRX
+*** Continuous variables ***
 ci means monthly_cases_per100k
 ci means tests_per100k
 ci means trx2020_per100k
@@ -187,7 +191,8 @@ summarize trx17_19avg_per100k
 summarize child_2020trxper100k
 summarize childtrx17_19avg_per100k
 
-/// frequency and percent ///
+*** Categorical variables ***
+// frequency and percent
 tab school_mch
 tab movement_restrictions
 tab face_coverings
@@ -195,7 +200,7 @@ tab urcode
 tab month
 tab state
 
-/// CIs by categorical ///
+// CIs by categorical variable
 // all ages trx
 sort school_mch
 by school_mch: ci means trx2020_per100k
@@ -238,126 +243,28 @@ by month: ci means monthly_cases_per100k
 sort state
 by state: ci means monthly_cases_per100k
 
-//DDD ANOVA
-oneway ddd2020_per100k school_mch, tabulate
-oneway ddd2020_per100k movement_restrictions, tabulate
-oneway ddd2020_per100k face_coverings, tabulate
-oneway ddd2020_per100k urcode, tabulate
-oneway ddd2020_per100k month, tabulate
-oneway ddd2020_per100k state, tabulate
-
-oneway child_2020dddper100k school, tabulate
-oneway child_2020dddper100k movement_restrictions, tabulate
-oneway child_2020dddper100k face_coverings, tabulate
-oneway child_2020dddper100k urcode, tabulate
-oneway child_2020dddper100k month, tabulate
-oneway child_2020dddper100k state, tabulate
-
-//TRX ANOVA
+*** ANOVA ***
+//TRX all ages
 oneway trx2020_per100k school_mch, tabulate
 oneway trx2020_per100k movement_restrictions, tabulate
 oneway trx2020_per100k face_coverings, tabulate
 oneway trx2020_per100k urcode, tabulate
 oneway trx2020_per100k month, tabulate
 oneway trx2020_per100k state, tabulate
-
+//TRX children
 oneway child_2020trxper100k school, tabulate
 oneway child_2020trxper100k movement_restrictions, tabulate
 oneway child_2020trxper100k face_coverings, tabulate
 oneway child_2020trxper100k urcode, tabulate
 oneway child_2020trxper100k month, tabulate
 oneway child_2020trxper100k state, tabulate
-
-//Cases ANOVA
+//Cases
 oneway monthly_cases_per100k school, tabulate
 oneway monthly_cases_per100k movement_restrictions, tabulate
 oneway monthly_cases_per100k face_coverings, tabulate
 oneway monthly_cases_per100k urcode, tabulate
 oneway monthly_cases_per100k month, tabulate
 oneway monthly_cases_per100k state, tabulate
-
-///DDDs descriptives
-summarize monthly_cases_per100k
-summarize ddd2020_per100k
-summarize ddd17_19avg_per100k
-summarize child_2020dddper100k
-summarize childddd17_19avg_per100k
-summarize tests_per100k
-summarize physician_off_per100k
-summarize povertypercent
-summarize minoritypercent
-
-//// medians and percentiles////
-// Kruskal–Wallis test TRX
-kwallis trx2020_per100k, by(school_mch)
-kwallis trx2020_per100k, by(movement_restrictions)
-kwallis trx2020_per100k, by(face_coverings)
-kwallis trx2020_per100k, by(urcode)
-kwallis trx2020_per100k, by(month)
-kwallis trx2020_per100k, by(state)
-
-// Kruskal–Wallis test TRX children
-kwallis child_2020trxper100k, by(school_mch)
-kwallis child_2020trxper100k, by(movement_restrictions)
-kwallis child_2020trxper100k, by(face_coverings)
-kwallis child_2020trxper100k, by(urcode)
-kwallis child_2020trxper100k, by(month)
-kwallis child_2020trxper100k, by(state)
-
-// Kruskal–Wallis test cases_per100k
-kwallis cases_per100k, by(school_mch)
-kwallis cases_per100k, by(movement_restrictions)
-kwallis cases_per100k, by(face_coverings)
-kwallis cases_per100k, by(urcode)
-kwallis cases_per100k, by(month)
-kwallis cases_per100k, by(state)
-
-// median and CI TRX all
-sort school_mch
-by school_mch: summarize trx2020_per100k, detail
-sort movement_restrictions
-by movement_restrictions: summarize trx2020_per100k, detail
-sort face_coverings
-by face_coverings: summarize trx2020_per100k, detail
-sort urcode
-by urcode: summarize trx2020_per100k, detail
-sort month
-by month: summarize trx2020_per100k, detail
-sort state
-by state: summarize trx2020_per100k, detail
-
-// median and CI TRX children
-sort school_mch
-by school_mch: summarize child_2020trxper100k, detail
-sort movement_restrictions
-by movement_restrictions: summarize child_2020trxper100k, detail
-sort face_coverings
-by face_coverings: summarize child_2020trxper100k, detail
-sort urcode
-by urcode: summarize child_2020trxper100k, detail
-sort month
-by month: summarize child_2020trxper100k, detail
-sort state
-by state: summarize child_2020trxper100k, detail
-
-// median and CI TRX covid
-sort school_mch
-by school_mch: summarize cases_per100k, detail
-sort movement_restrictions
-by movement_restrictions: summarize cases_per100k, detail
-sort face_coverings
-by face_coverings: summarize cases_per100k, detail
-sort urcode
-by urcode: summarize cases_per100k, detail
-sort month
-by month: summarize cases_per100k, detail
-sort state
-by state: summarize cases_per100k, detail
-
-tab school
-
-
-
 
 
 
