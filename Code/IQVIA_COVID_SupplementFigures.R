@@ -21,8 +21,6 @@ library(ggpubr)
 library("devtools")
 
 cov_trx=read_csv("[Main file path]/Data/IQVIA_2017_2020_byCounty_forFigures_v3_trx.csv")
-
-
 cov_trx1=cov_trx[,c("trx2020_per100k","cases_per100k")]
 
 #remove observations with zeros
@@ -30,16 +28,13 @@ row_zero = apply(cov_trx1, 1, function(row) all(row >=1))
 cov_trx2=cov_trx1[row_zero,]
 cov_trx2=na.omit(cov_trx2)
 
-
 cov_trx2$lg_cases=log(cov_trx2$cases_per100k)
 cov_trx2$lg_trx2020=log(cov_trx2$trx2020_per100k)
-
 
 #scatterplot of cases vs ddd
 ggplot(cov_trx,aes(x=cases_per100k, y=trx2020_per100k))+
   geom_point() + 
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE)
-#colnames(cov_trx)[1]="fips"
 
 library('ggpubr')
 # scatter plot of log cases and log ddd
@@ -49,12 +44,9 @@ ggplot(cov_trx2,aes(x=lg_cases, y=lg_trx2020))+
   xlab("Cases per 100,000 Population(log)")+ylab("Prescriptions per 100,000 Population(log)")+
   ggtitle(("Prescriptions vs COVID-19 Cases per 100,000 Population in 2020"))+theme(plot.title=element_text(hjust=0.5))
 
-
 ggplot(cov_trx2,aes(x=cases_per100k, y=lg_trx2020))+
   geom_point() + 
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE)
-#colnames(cov_trx)[1]="fips"
-
 
 trx_avg=aggregate(x=cov_trx$ddd2020_per100k, by=list(cov_trx$fips, cov_trx$month),FUN=mean)
 trx_avg=aggregate(x=cov_trx$ddd2020_per100k, by=list(cov_trx$fips),FUN=mean)
@@ -97,12 +89,10 @@ ggplot(data = county_full,
                                "20,000-30,000", "30,000-40,000", "40,000-50,000","50,000-60,000","60,000-70,000","70,000-80,000","80,000-90,000",">90,000"))+
   ggtitle("Mean Antibiotics Prescribed by County")+theme(plot.title=element_text(hjust=0.5))
 
-
 #########################Mean DDD Distribution###########################
 trxs_per_100k <- cov_trx$ddd2020_per100k
 hist(trxs_per_100k, main="Distribution of Prescriptions per 100k in 2020",xlim = c(0,9e+05), breaks=c(seq(5,1100000,5000)))
 
-#library(viridis)
 ggplot(trx_avg, aes(x=trx2020_mean, fill=..count..))+theme_bw()+
   geom_histogram(binwidth=10000)+ylab("Frequency")+xlab("Mean Prescriptions per 100,000 Population")+
   scale_fill_gradient("Frequency",low = "orange",high = "brown")+
