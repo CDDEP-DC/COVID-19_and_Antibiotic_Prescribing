@@ -227,8 +227,6 @@ ggplot(Classmeans, aes(x = reorder(class_cat,trx_per100k), y = trx_per100k, grou
   coord_flip()+theme_bw()+theme(plot.title=element_text(hjust=0.5))
 
 ########################AGE##########################3
-#byage=read_csv("/Users/suprenapoleon/Library/CloudStorage/OneDrive-CenterforDiseaseDynamics,Economics&Policy/CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/ProcessedData/IQVIA_AgeGroups_AllYears_v3_trx.csv")
-#byage$...1=NULL
 byage=DataAll
 byage=byage %>% group_by(age_group,year)%>%summarise(trx = sum(trx),popestimate=sum(unique(popestimate)))
 byage$trx_per100k=((byage$trx/byage$popestimate)*100000)
