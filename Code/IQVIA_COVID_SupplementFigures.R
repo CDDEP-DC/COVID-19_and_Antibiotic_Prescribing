@@ -1,3 +1,7 @@
+# COVID-19 and Antibiotic Prescribing
+# Generate Supplementary Figures
+# Created by Suprena Poleon
+
 library(readxl)
 library(ggplot2)
 library(dplyr)
@@ -16,7 +20,7 @@ library(cowplot)
 library(ggpubr)
 library("devtools")
 
-cov_trx=read_csv("/Users/suprenapoleon/Center for Disease Dynamics, Economics & Policy/Eili Klein - CDDEP Research Projects (active)/IMS/2017-2020 IQVIA Data/ProcessedData/IQVIA_2017_2020_byCounty_forFigures_v3_trx.csv")
+cov_trx=read_csv("[Main file path]/Data/IQVIA_2017_2020_byCounty_forFigures_v3_trx.csv")
 
 
 cov_trx1=cov_trx[,c("trx2020_per100k","cases_per100k")]
