@@ -67,6 +67,7 @@ Data2020$popestimate=Data2020$POPEST2020_CIV
 Data2020$POPEST2020_CIV=NULL
 
 DataAll= rbind(Data2017,Data2018,Data2019,Data2020)
+
 ################total antibiotics for march to december 2017-2019 vs 2020#########
 data_17_19=rbind(Data2017,Data2018,Data2019)
 data_17_19=subset(data_17_19,month>=3)
@@ -79,7 +80,6 @@ data_20 <- data_20 %>% group_by(year)%>%summarise(trx=sum(trx),popestimate=sum(u
 data_20$trx_per100k=(data_20$trx/data_20$popestimate)*100000
 
 ###################################BY MONTH######################################
-#rowmerge
 DataByMonthAll= rbind(ByMonth2017,ByMonth2018,ByMonth2019,ByMonth2020)
 
 DataByMonthAll$year=as.factor(DataByMonthAll$year)
@@ -92,7 +92,6 @@ ggplot(DataByMonthAll, aes(x=month,y=trx, group= year,color=year))+geom_line()+
 
 ###################################BY STATE#####################################
 #Create new datasets grouped by state
-
 Data2017_2=Data2017%>%group_by(prescriber_st,year) %>% summarise(trx = sum(trx), popestimate=sum(unique(popestimate)))
 Data2017_2$trx2017_per100k=((Data2017_2$trx/Data2017_2$popestimate)*100000)
 
@@ -142,7 +141,6 @@ lineplot=ggplot(DataByMonthAll, aes(x=month,y=trx, group= year,color=year))+geom
   geom_point()+ scale_x_discrete(labels=month.abb)+scale_y_continuous(labels = comma)+
   theme_bw()+theme(plot.title=element_text(hjust=0.5))
 
-
 cowplot::plot_grid(lineplot,pct_chnge, nrow=2,labels="AUTO")
 dev.off()
 ####################################BY CLASS####################################
@@ -154,7 +152,6 @@ ggplot(class_all, aes(x=year,y=trx_per100k, group= class, color=class))+
   geom_line()+geom_point()+theme_classic()+xlab("Year")+ylab("Total DDD Per Thousand")
 ggtitle(("Total DDDs per Capita By Antibiotic Class for 2017-2020"))
 
-
 #RECATEGORIZE
 class17<-Data2017
 class17$class_cat=dplyr::recode(class17$class,"Broad-spectrum Penicillins" = "Broad-spectrum Penicillins",
@@ -165,7 +162,6 @@ class17$class_cat=dplyr::recode(class17$class,"Broad-spectrum Penicillins" = "Br
 class2017 <- class17 %>% group_by(class_cat,year)%>%summarise(trx = sum(trx),POPESTIMATE=sum(unique(popestimate)))
 class2017$trx_per100k=((class2017$trx/class2017$POPESTIMATE)*100000)
 
-
 class18<-Data2018
 class18$class_cat=dplyr::recode(class18$class,"Broad-spectrum Penicillins" = "Broad-spectrum Penicillins",
                                 "Tetracyclines" = "Tetracyclines","Trimethoprim and combinations"="Trimethoprim and combinations", 
@@ -173,7 +169,6 @@ class18$class_cat=dplyr::recode(class18$class,"Broad-spectrum Penicillins" = "Br
                                 "Narrow-spectrum Penicillins"="Narrow-spectrum Penicillins", .default="Others")
 class2018 <- class18 %>% group_by(class_cat,year)%>%summarise(trx = sum(trx),POPESTIMATE=sum(unique(popestimate)))
 class2018$trx_per100k=((class2018$trx/class2018$POPESTIMATE)*100000)
-
 
 class19<-Data2019
 class19$class_cat=dplyr::recode(class19$class,"Broad-spectrum Penicillins" = "Broad-spectrum Penicillins",
@@ -183,7 +178,6 @@ class19$class_cat=dplyr::recode(class19$class,"Broad-spectrum Penicillins" = "Br
 class2019 <- class19 %>% group_by(class_cat,year)%>%summarise(trx = sum(trx),POPESTIMATE=sum(unique(popestimate)))
 class2019$trx_per100k=((class2019$trx/class2019$POPESTIMATE)*100000)
 
-
 class20<-Data2020
 class20$class_cat=dplyr::recode(class20$class,"Broad-spectrum Penicillins" = "Broad-spectrum Penicillins",
                                 "Tetracyclines" = "Tetracyclines","Trimethoprim and combinations"="Trimethoprim and combinations", 
@@ -191,7 +185,6 @@ class20$class_cat=dplyr::recode(class20$class,"Broad-spectrum Penicillins" = "Br
                                 "Narrow-spectrum Penicillins"="Narrow-spectrum Penicillins", .default="Others")
 class2020 <- class20 %>% group_by(class_cat,year)%>%summarise(trx = sum(trx),POPESTIMATE=sum(unique(popestimate)))
 class2020$trx_per100k=((class2020$trx/class2020$POPESTIMATE)*100000)
-
 
 classtot=rbind(class2017,class2018,class2019,class2020)
 
@@ -241,9 +234,7 @@ Agemeans=Agemeans%>%rowwise()%>%mutate(trx_per100k=mean(c(`2017`,`2018`,`2019`))
 Agemeans$year=2019
 
 Agemeans <- select(Agemeans, -(2:4))
-#colnames(Agemeans)[3]="Year"
 
-#trx2020=select(trx2020, -(3:4))
 Agemeans=rbind(Agemeans,agemeans_20)
 
 Agemeans$year=format(Agemeans$year, format="%Y")
@@ -282,7 +273,4 @@ bargraph2=ggplot(Agemeans, aes(x = age_group, y = trx_per100k, group=trx_per100k
 
 cowplot::plot_grid(bargraph,bargraph2, nrow=2,labels="AUTO")
 dev.off()
-
-
-
 
