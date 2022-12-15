@@ -68,7 +68,7 @@ statepops = statepops.groupby('state')['Pop2020_all'].sum().reset_index()
 
 ############################ IQVIA data ######################################
 
-files = glob.glob(OneDrive + "/Data/*_Disaggregated.csv")
+files = glob.glob(OneDrive + "/Data/*_Disaggregated_v3.csv")
 file_lst = []
 
 for file in files:
